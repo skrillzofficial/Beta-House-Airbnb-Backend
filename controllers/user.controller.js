@@ -1,8 +1,6 @@
 const USER = require("../models/userSchema");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
-// Email validation helper
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -16,19 +14,21 @@ const handleRegister = async (req, res) => {
 
   const { firstName, lastName, email, password } = req.body;
 
-  // Validate required fields
+  // Validating required fields
   if (!firstName || !lastName || !email || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  // Validate email format
+  // Validating email format
   if (!isValidEmail(email)) {
     return res.status(400).json({ message: "Invalid email format" });
   }
 
-  // Validate password length
+  // Validating password length
   if (password.length < 6) {
-    return res.status(400).json({ message: "Password must be at least 6 characters" });
+    return res
+      .status(400)
+      .json({ message: "Password must be at least 6 characters" });
   }
 
   try {
@@ -37,11 +37,11 @@ const handleRegister = async (req, res) => {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    // protect user password
+    // protecting user password
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // save to database
+    // saving created user to database
     const user = await USER.create({
       firstName,
       lastName,
@@ -60,7 +60,7 @@ const handleRegister = async (req, res) => {
     });
   } catch (error) {
     console.error("Registration error:", error);
-    if (error.name === 'MongoError' && error.code === 11000) {
+    if (error.name === "MongoError" && error.code === 11000) {
       return res.status(400).json({ message: "Email already exists" });
     }
     res.status(500).json({ message: "Internal server error" });
@@ -70,12 +70,12 @@ const handleRegister = async (req, res) => {
 // function to login
 const handleLogin = async (req, res) => {
   const { email, password } = req.body;
-  
+
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
 
-  // Check if JWT_SECRET is set
+  // Checking if JWT_SECRET is already set
   if (!process.env.JWT_SECRET) {
     console.error("JWT_SECRET is not defined");
     return res.status(500).json({ message: "Internal server error" });
@@ -86,22 +86,22 @@ const handleLogin = async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-    
+
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // generate a token
+    //To generate a token
     const token = jwt.sign(
-      { 
+      {
         userId: user._id,
-        email: user.email 
+        email: user.email,
       },
       process.env.JWT_SECRET,
       { expiresIn: "2 days" }
     );
-    
+
     return res.status(200).json({
       success: true,
       token,
@@ -116,7 +116,35 @@ const handleLogin = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+const handleGetUser = async (req, res) => {
+  try {
+    const user = await USER.findById(req.user.userId).select("-password");
 
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Get user error:", error);
+
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 // function to handle update User
 const handleUpdateUser = async (req, res) => {
   if (!req.user || !req.user.userId) {
@@ -124,31 +152,30 @@ const handleUpdateUser = async (req, res) => {
   }
 
   const { userId } = req.user;
-  
+
   try {
     const user = await USER.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Validate input
-    if (req.body.firstName && req.body.firstName.trim() === '') {
+    // Validating input
+    if (req.body.firstName && req.body.firstName.trim() === "") {
       return res.status(400).json({ message: "First name cannot be empty" });
     }
-    if (req.body.lastName && req.body.lastName.trim() === '') {
+    if (req.body.lastName && req.body.lastName.trim() === "") {
       return res.status(400).json({ message: "Last name cannot be empty" });
     }
 
-    // update fields if provided
     if (req.body.firstName) {
       user.firstName = req.body.firstName.trim();
     }
     if (req.body.lastName) {
       user.lastName = req.body.lastName.trim();
     }
-    
+
     await user.save();
-    
+
     res.status(200).json({
       success: true,
       message: "User updated successfully",
@@ -168,4 +195,5 @@ module.exports = {
   handleRegister,
   handleLogin,
   handleUpdateUser,
+  handleGetUser,
 };
