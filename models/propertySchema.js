@@ -27,8 +27,8 @@ const propertySchema = new Schema(
         }],
         status: {
             type: String,
-            enum: ["For sale", "For rent"],
-            default: "available"
+            enum: ["For rent", "For sale"],
+            default: "rent"
         },
         isFeatured: {
             type: Boolean,

@@ -23,7 +23,7 @@ const createProperty = async (req, res) => {
       });
     }
 
-    // Handle image uploads if files are provided
+    // Handle image uploads
     let imageUrls = [];
     if (req.files && req.files.images) {
       const images = Array.isArray(req.files.images)
@@ -40,12 +40,10 @@ const createProperty = async (req, res) => {
           imageUrls.push(result.secure_url);
         } catch (uploadError) {
           console.error("Image upload failed:", uploadError);
-          // Continue with other images even if one fails
         }
       }
     }
 
-    // Create the property with simplified schema
     const propertyData = {
       title: title.trim(),
       price: Number(price),
@@ -107,10 +105,6 @@ const getPropertyById = async (req, res) => {
         message: "Property not found",
       });
     }
-
-    // Increment views (optional)
-    property.views = (property.views || 0) + 1;
-    await property.save();
 
     res.status(200).json({
       success: true,

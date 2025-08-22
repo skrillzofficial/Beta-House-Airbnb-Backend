@@ -116,6 +116,7 @@ const handleLogin = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+// Function to handle get a single user
 const handleGetUser = async (req, res) => {
   try {
     const user = await USER.findById(req.user.userId).select("-password");
