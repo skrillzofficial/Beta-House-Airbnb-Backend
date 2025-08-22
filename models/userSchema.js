@@ -17,10 +17,6 @@ const userSchema = new Schema(
             lowercase: true,
             match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         },
-        profilePicture: {
-            type: String,
-            default: "https://thumbs.dreamstime.com/b/user-profile-d-icon-avatar-person-button-picture-portrait-symbol-vector-neutral-gender-silhouette-circle-photo-blank-272643248.jpg?w=768"
-        },
         password: {
             type: String,
             minlength: [6, "Minimum password length is 6"],
