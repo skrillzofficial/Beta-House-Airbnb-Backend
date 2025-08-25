@@ -144,6 +144,61 @@ const updateProperty = async (req, res) => {
       message: error.message,
     });
   }
+}; // Find a single specific property
+const searchProperty = async (req, res) => {
+  try {
+    // Get search parameters
+    const location = req.query.location || req.body.location;
+    const propertyType = req.query.propertyType || req.body.propertyType;
+    const bedrooms = req.query.bedrooms || req.body.bedrooms;
+
+    // Check if at least one search parameter is provided
+    if (!location && !propertyType && !bedrooms) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Provide at least one search parameter (location, propertyType, or bedrooms)",
+      });
+    }
+
+    // Build filter object
+    const filter = {};
+
+    // location filter if provided (exact match)
+    if (location && location.trim() !== "") {
+      filter.location = location.trim();
+    }
+
+    // property type filter if provided (exact match)
+    if (propertyType && propertyType !== "all") {
+      filter.propertyType = propertyType;
+    }
+
+    //bedrooms filter if provided (exact match)
+    if (bedrooms && bedrooms !== "0") {
+      filter.bedrooms = parseInt(bedrooms);
+    }
+
+    // Find property that matches all criteria
+    const property = await PROPERTY.find(filter);
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        message: "No property found matching your criteria",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Property found successfully",
+      property: property,
+    });
+  } catch (error) {
+    console.error("Search error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error searching for property",
+    });
+  }
 };
 
 // Delete property
@@ -175,5 +230,6 @@ module.exports = {
   getAllProperties,
   getPropertyById,
   updateProperty,
+  searchProperty,
   deleteProperty,
 };
