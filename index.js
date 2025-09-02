@@ -25,7 +25,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: "https://beta-house-airbnb-front-end-18at.vercel.app",
     credentials: true,
   })
 );
@@ -45,10 +45,6 @@ app.get("/api/v1/test", (req, res) => {
   res.status(200).json({ status: "success", message: "API is working!" });
 });
 
-// Health check
-app.get("/", (req, res) => {
-  res.send("Server is running. Use Postman to test endpoints.");
-});
 
 // DATABASE & SERVER START
 const startServer = async () => {
